@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список країн</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            background: linear-gradient(to right, #81d4fa, #b2ebf2);
+            color: #0d47a1;
+            line-height: 1.5;
+        }
+
+        header {
+            background-color: rgba(13, 71, 161, 0.9);
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 36px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #filter-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin: 20px auto;
+            width: 80%;
+        }
+
+        button, select {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin: 5px;
+            font-size: 16px;
+            background-color: #42a5f5;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #1e88e5;
+        }
+
+        #countries-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px;
+        }
+
+        .country-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+
+        .country-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .country-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .country-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #0d47a1;
+        }
+
+        /* Модальне вікно */
+        #modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        #modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 10px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            #filter-panel {
+                flex-direction: column;
+                align-items: center;
+            }
+            button, select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Список країн світу
+    </header>
+    <div id="filter-panel">
+        <button id="list-view">Список</button>
+        <button id="card-view">Картки</button>
+        <select id="region-filter">
+            <option value="all">Всі регіони</option>
+            <option value="Africa">Африка</option>
+            <option value="Asia">Азія</option>
+            <option value="Europe">Європа</option>
+        </select>
+        <button id="clear-filters">Скинути фільтри</button>
+    </div>
+    <div id="countries-container"></div>
+
+    <!-- Модальне вікно -->
+    <div id="modal">
+        <div id="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title"></h2>
+            <p id="modal-region"></p>
+            <p id="modal-info"></p>
+        </div>
+    </div>
+
+    <script>
+        const countries = [
+            { name: 'South Georgia', region: 'Europe', flag: 'https://flagcdn.com/w320/gs.png', info: 'Це територія Великої Британії.' },
+            { name: 'Grenada', region: 'Caribbean', flag: 'https://flagcdn.com/w320/gd.png', info: 'Гренада відома своїми специями.' },
+            { name: 'Sierra Leone', region: 'Africa', flag: 'https://flagcdn.com/w320/sl.png', info: 'Відомий за своїми діамантами.' },
+            { name: 'Hungary', region: 'Europe', flag: 'https://flagcdn.com/w320/hu.png', info: 'Відома своїми термальними водами.' },
+            { name: 'Wallis and Futuna', region: 'Oceania', flag: 'https://flagcdn.com/w320/wf.png', info: 'Острівна територія Франції.' },
+            { name: 'Ivory Coast', region: 'Africa', flag: 'https://flagcdn.com/w320/ci.png', info: 'Відомий за своїми какао-бобами.' },
+            { name: 'Benin', region: 'Africa', flag: 'https://flagcdn.com/w320/bj.png', info: 'Батьківщина вуду.' },
+            { name: 'Saint Kitts and Nevis', region: 'Caribbean', flag: 'https://flagcdn.com/w320/kn.png', info: 'Маленька країна в Карибському морі.' },
+            { name: 'Laos', region: 'Asia', flag: 'https://flagcdn.com/w320/la.png', info: 'Відомий за своїми природними красотами.' },
+            { name: 'Tunisia', region: 'Africa', flag: 'https://flagcdn.com/w320/tn.png', info: 'Відомий за своїми історичними пам\'ятками.' },
+            { name: 'Indonesia', region: 'Asia', flag: 'https://flagcdn.com/w320/id.png', info: 'Велика архіпелагова країна.' },
+            { name: 'Italy', region: 'Europe', flag: 'https://flagcdn.com/w320/it.png', info: 'Відома своєю кухнею та культурою.' },
+            { name: 'Cape Verde', region: 'Africa', flag: 'https://flagcdn.com/w320/cv.png', info: 'Острівна країна в Атлантичному океані.' },
+            { name: 'Netherlands', region: 'Europe', flag: 'https://flagcdn.com/w320/nl.png', info: 'Відома своїми вітряками та тюльпанами.' }
+        ];
+
+        const countriesContainer = document.getElementById('countries-container');
+        const regionFilter = document.getElementById('region-filter');
+        const clearFiltersButton = document.getElementById('clear-filters');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalRegion = document.getElementById('modal-region');
+        const modalInfo = document.getElementById('modal-info');
+        const closeModal = document.getElementsByClassName('close')[0];
+
+        let currentView = 'card';
+
+        // Ініціалізація
+        function init() {
+            bindEvents();
+            displayCountries(countries);
+        }
+
+        function bindEvents() {
+            document.getElementById('list-view').onclick = () => {
+                currentView = 'list';
+                displayCountries(countries);
+            };
+
+            document.getElementById('card-view').onclick = () => {
+                currentView = 'card';
+                displayCountries(countries);
+            };
+
+            regionFilter.onchange = filterCountries;
+
+            clearFiltersButton.onclick = () => {
+                regionFilter.value = 'all';
+                displayCountries(countries);
+            };
+
+            closeModal.onclick = () => {
+                modal.style.display = "none";
+            };
+
+            window.onclick = (event) => {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            };
+        }
+
+        function filterCountries() {
+            const selectedRegion = regionFilter.value;
+            const filteredCountries = selectedRegion === 'all' ? countries : countries.filter(country => country.region === selectedRegion);
+            displayCountries(filteredCountries);
+        }
+
+        function displayCountries(countryList) {
+            countriesContainer.innerHTML = '';
+
+            countryList.forEach(country => {
+                const card = document.createElement('div');
+                card.classList.add('country-card');
+
+                if (currentView === 'card') {
+                    card.innerHTML = `
+                        <img src="${country.flag}" alt="${country.name} flag">
+                        <div class="country-name">${country.name}</div>
+                    `;
+                } else {
+                    card.innerHTML = `<div>${country.name} - ${country.region}</div>`;
+                }
+
+                card.onclick = () => showCountryDetails(country);
+                countriesContainer.appendChild(card);
+            });
+        }
+
+        function showCountryDetails(country) {
+            modalTitle.innerText = country.name;
+            modalRegion.innerText = `Регіон: ${country.region}`;
+            modalInfo.innerText = country.info;
+            modal.style.display = "block";
+        }
+
+        init();
+    </script>
+</body>
+</html>
